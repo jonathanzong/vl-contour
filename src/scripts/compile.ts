@@ -1,38 +1,38 @@
-import * as vega from "vega";
-import * as vl from "vega-lite";
-import { VlContourUnitSpec } from "./types";
+import * as vega from 'vega';
+import * as vl from 'vega-lite';
+import { VlContourUnitSpec } from './types';
 
 const compileUnitVlContour = (vlSpec: VlContourUnitSpec): vega.Spec => {
-  if (vlSpec.mark !== "contour") {
+  if (vlSpec.mark !== 'contour') {
     return vl.compile(vlSpec as vl.TopLevelSpec).spec;
   } else {
     const vgSpec: vega.Spec = {
-      $schema: "https://vega.github.io/schema/vega/v5.json",
+      $schema: 'https://vega.github.io/schema/vega/v5.json',
       width: 650,
-      autosize: "none",
+      autosize: 'none',
 
       signals: [
         {
-          name: "grid",
+          name: 'grid',
           init: "data('originalData')[0]",
         },
         {
-          name: "height",
-          update: "round(grid.height * width / grid.width)",
+          name: 'height',
+          update: 'round(grid.height * width / grid.width)',
         },
       ],
 
       data: [
         {
-          name: "originalData",
+          name: 'originalData',
         },
         {
-          name: "contours",
-          source: "originalData",
+          name: 'contours',
+          source: 'originalData',
           transform: [
             {
-              type: "isocontour",
-              scale: { expr: "width / datum.width" },
+              type: 'isocontour',
+              scale: { expr: 'width / datum.width' },
             },
           ],
         },
@@ -40,28 +40,28 @@ const compileUnitVlContour = (vlSpec: VlContourUnitSpec): vega.Spec => {
 
       scales: [
         {
-          name: "color",
-          type: "linear",
-          domain: { data: "contours", field: "contour.value" },
-          range: { scheme: "blueorange" },
+          name: 'color',
+          type: 'linear',
+          domain: { data: 'contours', field: 'contour.value' },
+          range: { scheme: 'blueorange' },
         },
       ],
 
       marks: [
         {
-          type: "path",
-          from: { data: "contours" },
+          type: 'path',
+          from: { data: 'contours' },
           encode: {
             enter: {
-              stroke: { value: "#ccc" },
+              stroke: { value: '#ccc' },
               strokeWidth: { value: 1 },
-              fill: { scale: "color", field: "contour.value" },
+              fill: { scale: 'color', field: 'contour.value' },
             },
           },
           transform: [
             {
-              type: "geopath",
-              field: "datum.contour",
+              type: 'geopath',
+              field: 'datum.contour',
             },
           ],
         },
@@ -72,30 +72,30 @@ const compileUnitVlContour = (vlSpec: VlContourUnitSpec): vega.Spec => {
       vgSpec.description = vlSpec.description;
     }
 
-    if ("url" in vlSpec.data) {
+    if ('url' in vlSpec.data) {
       vgSpec.data[0] = {
-        name: "originalData",
+        name: 'originalData',
         url: vlSpec.data.url,
       };
     }
 
-    if ("values" in vlSpec.data) {
+    if ('values' in vlSpec.data) {
       vgSpec.data[0] = {
-        name: "originalData",
+        name: 'originalData',
         values: [vlSpec.data.values].flat(),
       };
     }
 
     if (vlSpec.encoding) {
-      if ("smooth" in vlSpec.encoding) {
+      if ('smooth' in vlSpec.encoding) {
         (vgSpec.data[1].transform[0] as vega.IsocontourTransform).smooth =
           Boolean(vlSpec.encoding.smooth.value);
       }
       if (
-        "thresholds" in vlSpec.encoding &&
-        "value" in vlSpec.encoding.thresholds
+        'thresholds' in vlSpec.encoding &&
+        'value' in vlSpec.encoding.thresholds
       ) {
-        if ("expr" in vlSpec.encoding.thresholds.value) {
+        if ('expr' in vlSpec.encoding.thresholds.value) {
           ((vgSpec.data[1].transform[0] as vega.IsocontourTransform)
             .thresholds as vega.SignalRef) = {
             signal: vlSpec.encoding.thresholds.value.expr,
