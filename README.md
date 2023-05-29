@@ -1,12 +1,17 @@
-# vl-animation
+# vl-contour
 
-install `parcel-bundler` and `typescript` globally or have a bad time
+install `parcel-bundler` and `typescript` globally
 
 `yarn add global parcel-bundler typescript`
 
-must use vega-lite@4 (version 5 broke typescript)
-
 install files with `yarn`
 
-run with `yarn start`. this launches a webapp that is hosted by
-default on `localhost:1234`
+run with `yarn start`
+
+### testing
+
+`yarn link` in `vl-contour`
+
+`yarn link vl-contour` in `editor`
+
+replace `vegaLite.compile` with `compile` imported from `vl-contour`
