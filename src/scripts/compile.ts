@@ -1,11 +1,17 @@
 import * as vega from 'vega';
 import * as vl from 'vega-lite';
 import { VlContourUnitSpec } from './types';
+import cloneDeep from 'lodash.clonedeep';
 
 const compileUnitVlContour = (vlSpec: VlContourUnitSpec): vega.Spec => {
   if (vlSpec.mark !== 'contour') {
     return vl.compile(vlSpec as vl.TopLevelSpec).spec;
   } else {
+    const vlSpecCopy = cloneDeep(vlSpec);
+    vlSpecCopy.mark = 'point';
+    const vgSpecCompiled = vl.compile(vlSpecCopy as vl.TopLevelSpec).spec;
+    console.log(vgSpecCompiled);
+
     const vgSpec: vega.Spec = {
       $schema: 'https://vega.github.io/schema/vega/v5.json',
       width: 650,
@@ -53,8 +59,6 @@ const compileUnitVlContour = (vlSpec: VlContourUnitSpec): vega.Spec => {
           from: { data: 'contours' },
           encode: {
             enter: {
-              stroke: { value: '#ccc' },
-              strokeWidth: { value: 1 },
               fill: { scale: 'color', field: 'contour.value' },
             },
           },
@@ -104,6 +108,20 @@ const compileUnitVlContour = (vlSpec: VlContourUnitSpec): vega.Spec => {
           (vgSpec.data[1].transform[0] as vega.IsocontourTransform).thresholds =
             vlSpec.encoding.thresholds.value;
         }
+      }
+      if ('color' in vlSpec.encoding) {
+        if (
+          'scale' in vlSpec.encoding.color &&
+          'scheme' in vlSpec.encoding.color.scale
+        ) {
+          ((vgSpec.scales[0] as vega.LinearScale).range as any) = {
+            scheme: vlSpec.encoding.color.scale.scheme,
+          };
+        }
+      }
+      if ('stroke' in vlSpec.encoding) {
+        (vgSpec.marks[0].encode as any).enter.stroke =
+          vgSpecCompiled.marks[0].encode.update.stroke;
       }
     }
     return vgSpec;
