@@ -4,7 +4,7 @@
   "mark": "contour",
   "encoding": {
     "stroke": {"value": "#ccc"},
-    "color": {"field": "value", "type": "quantitative", "scale": {"scheme": "blueorange"}},
+    "color": {"scale": {"scheme": "blueorange"}},
     "smooth": {"value": true},
     "thresholds": {"value": {"expr": "sequence(90, 195, 5)"}}
   }
