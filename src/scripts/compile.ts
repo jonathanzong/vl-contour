@@ -42,6 +42,17 @@ const compileUnitVlContour = (vlSpec: VlContourUnitSpec): vega.Spec => {
             },
           ],
         },
+        // {
+        //   name: 'geodata',
+        //   source: 'contours',
+        //   transform: [
+        //     {
+        //       type: 'geojson',
+        //       geojson: 'contour',
+        //       signal: 'geojson_contours',
+        //     },
+        //   ],
+        // },
       ],
 
       scales: [
@@ -90,38 +101,43 @@ const compileUnitVlContour = (vlSpec: VlContourUnitSpec): vega.Spec => {
       };
     }
 
+    // if ('projection' in vlSpec && !(vlSpec.projection.type as vega.ExprRef).expr) {
+    //   const projections: vega.Projection[] = [
+    //     {
+    //       name: 'projection',
+    //       size: { signal: '[width, height]' },
+    //       fit: { signal: 'geojson_contours' },
+    //       type: vlSpec.projection.type as vega.ProjectionType,
+    //     },
+    //   ];
+
+    //   vgSpec.projections = projections;
+
+    //   (vgSpec.marks[0].transform[0] as vega.GeoPathTransform).projection = 'projection';
+    // }
+
     if (vlSpec.encoding) {
       if ('smooth' in vlSpec.encoding) {
-        (vgSpec.data[1].transform[0] as vega.IsocontourTransform).smooth =
-          Boolean(vlSpec.encoding.smooth.value);
+        (vgSpec.data[1].transform[0] as vega.IsocontourTransform).smooth = Boolean(vlSpec.encoding.smooth.value);
       }
-      if (
-        'thresholds' in vlSpec.encoding &&
-        'value' in vlSpec.encoding.thresholds
-      ) {
+      if ('thresholds' in vlSpec.encoding && 'value' in vlSpec.encoding.thresholds) {
         if ('expr' in vlSpec.encoding.thresholds.value) {
-          ((vgSpec.data[1].transform[0] as vega.IsocontourTransform)
-            .thresholds as vega.SignalRef) = {
+          ((vgSpec.data[1].transform[0] as vega.IsocontourTransform).thresholds as vega.SignalRef) = {
             signal: vlSpec.encoding.thresholds.value.expr,
           };
         } else {
-          (vgSpec.data[1].transform[0] as vega.IsocontourTransform).thresholds =
-            vlSpec.encoding.thresholds.value;
+          (vgSpec.data[1].transform[0] as vega.IsocontourTransform).thresholds = vlSpec.encoding.thresholds.value;
         }
       }
       if ('color' in vlSpec.encoding) {
-        if (
-          'scale' in vlSpec.encoding.color &&
-          'scheme' in vlSpec.encoding.color.scale
-        ) {
+        if ('scale' in vlSpec.encoding.color && 'scheme' in vlSpec.encoding.color.scale) {
           ((vgSpec.scales[0] as vega.LinearScale).range as any) = {
             scheme: vlSpec.encoding.color.scale.scheme,
           };
         }
       }
       if ('stroke' in vlSpec.encoding) {
-        (vgSpec.marks[0].encode as any).enter.stroke =
-          vgSpecCompiled.marks[0].encode.update.stroke;
+        (vgSpec.marks[0].encode as any).enter.stroke = vgSpecCompiled.marks[0].encode.update.stroke;
       }
     }
     return vgSpec;
