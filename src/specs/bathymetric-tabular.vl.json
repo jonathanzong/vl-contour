@@ -1,0 +1,9 @@
+{
+  "data": {"url": "https://gist.githubusercontent.com/jonathanzong/fe9f7a111a1465f80a011fcc8f2d8724/raw/68eb0ba463d4c794536c1f9a2dfe324bec15687c/bathymetric.csv"},
+  "mark": "contour",
+  "encoding": {
+    "stroke": {"value": "#ccc"},
+    "color": {"scale": {"scheme": "blueorange"}},
+    "smooth": {"value": true}
+  }
+}

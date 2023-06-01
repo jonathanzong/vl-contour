@@ -20,7 +20,7 @@ const compileUnitVlContour = (vlSpec: VlContourUnitSpec): vega.Spec => {
       signals: [
         {
           name: 'grid',
-          init: "data('originalData')[0]",
+          init: "data('contours')[0]",
         },
         {
           name: 'height',
@@ -30,7 +30,20 @@ const compileUnitVlContour = (vlSpec: VlContourUnitSpec): vega.Spec => {
 
       data: [
         {
+          ...vgSpecCompiled.data[0],
           name: 'originalData',
+        },
+        {
+          name: 'hi',
+          source: 'originalData',
+          transform: [
+            {
+              type: 'pivot',
+              field: 'depth',
+              value: 'value',
+              op: 'values',
+            },
+          ],
         },
         {
           name: 'contours',
@@ -85,20 +98,6 @@ const compileUnitVlContour = (vlSpec: VlContourUnitSpec): vega.Spec => {
 
     if (vlSpec.description) {
       vgSpec.description = vlSpec.description;
-    }
-
-    if ('url' in vlSpec.data) {
-      vgSpec.data[0] = {
-        name: 'originalData',
-        url: vlSpec.data.url,
-      };
-    }
-
-    if ('values' in vlSpec.data) {
-      vgSpec.data[0] = {
-        name: 'originalData',
-        values: [vlSpec.data.values].flat(),
-      };
     }
 
     // if ('projection' in vlSpec && !(vlSpec.projection.type as vega.ExprRef).expr) {
