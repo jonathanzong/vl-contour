@@ -19,7 +19,7 @@ const compileUnitVlContour = (vlSpec: VlContourUnitSpec): vega.Spec => {
       autosize: 'none',
 
       signals: [
-        ...vgSpecCompiled.signals,
+        ...(vgSpecCompiled.signals || []),
         {
           name: 'grid',
           init: "data('contours')[0]",
