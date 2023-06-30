@@ -1,0 +1,28 @@
+{
+  "description": "A contour plot of the Maungawhau volcano in New Zealand.",
+  "data": {"url": "data/volcano.json"},
+  "mark": "contour",
+  "encoding": {
+    "stroke": {"value": "#ccc"},
+    "color": {
+      "condition": {
+        "param": "selection",
+        "field": "contourValue",
+        "scale": {"scheme": "blueorange"}
+      },
+      "value": "#333"
+    },
+    "smooth": {"value": true},
+    "thresholds": {"value": {"expr": "sequence(90, 195, 5)"}},
+  },
+  "params": [
+    {
+      "name": "selection",
+      "select": {
+        "type": "point",
+        "on": "mouseover",
+        "fields": ["contourValue"]
+      }
+    }
+  ]
+}
