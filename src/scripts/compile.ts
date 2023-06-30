@@ -10,6 +10,7 @@ const compileUnitVlContour = (vlSpec: VlContourUnitSpec): vega.Spec => {
     const vlSpecCopy = cloneDeep(vlSpec);
     vlSpecCopy.mark = 'point';
     const vgSpecCompiled = vl.compile(vlSpecCopy as vl.TopLevelSpec).spec;
+
     console.log(vgSpecCompiled);
 
     const vgSpec: vega.Spec = {
@@ -18,6 +19,7 @@ const compileUnitVlContour = (vlSpec: VlContourUnitSpec): vega.Spec => {
       autosize: 'none',
 
       signals: [
+        ...vgSpecCompiled.signals,
         {
           name: 'grid',
           init: "data('contours')[0]",
@@ -29,8 +31,9 @@ const compileUnitVlContour = (vlSpec: VlContourUnitSpec): vega.Spec => {
       ],
 
       data: [
+        ...vgSpecCompiled.data.filter((d) => d.name !== 'source_0'),
         {
-          ...vgSpecCompiled.data[0],
+          ...vgSpecCompiled.data.find((d) => d.name === 'source_0'),
           name: 'originalData',
         },
         {
@@ -52,6 +55,11 @@ const compileUnitVlContour = (vlSpec: VlContourUnitSpec): vega.Spec => {
             {
               type: 'isocontour',
               scale: { expr: 'width / datum.width' },
+            },
+            {
+              type: 'formula',
+              expr: 'datum.contour.value',
+              as: 'contourValue',
             },
           ],
         },
@@ -85,6 +93,7 @@ const compileUnitVlContour = (vlSpec: VlContourUnitSpec): vega.Spec => {
             enter: {
               fill: { scale: 'color', field: 'contour.value' },
             },
+            update: {},
           },
           transform: [
             {
@@ -117,15 +126,15 @@ const compileUnitVlContour = (vlSpec: VlContourUnitSpec): vega.Spec => {
 
     if (vlSpec.encoding) {
       if ('smooth' in vlSpec.encoding) {
-        (vgSpec.data[1].transform[0] as vega.IsocontourTransform).smooth = Boolean(vlSpec.encoding.smooth.value);
+        (vgSpec.data.find((d) => d.name === 'contours').transform[0] as vega.IsocontourTransform).smooth = Boolean(vlSpec.encoding.smooth.value);
       }
       if ('thresholds' in vlSpec.encoding && 'value' in vlSpec.encoding.thresholds) {
         if ('expr' in vlSpec.encoding.thresholds.value) {
-          ((vgSpec.data[1].transform[0] as vega.IsocontourTransform).thresholds as vega.SignalRef) = {
+          ((vgSpec.data.find((d) => d.name === 'contours').transform[0] as vega.IsocontourTransform).thresholds as vega.SignalRef) = {
             signal: vlSpec.encoding.thresholds.value.expr,
           };
         } else {
-          (vgSpec.data[1].transform[0] as vega.IsocontourTransform).thresholds = vlSpec.encoding.thresholds.value;
+          (vgSpec.data.find((d) => d.name === 'contours').transform[0] as vega.IsocontourTransform).thresholds = vlSpec.encoding.thresholds.value;
         }
       }
       if ('color' in vlSpec.encoding) {
@@ -138,7 +147,26 @@ const compileUnitVlContour = (vlSpec: VlContourUnitSpec): vega.Spec => {
       if ('stroke' in vlSpec.encoding) {
         (vgSpec.marks[0].encode as any).enter.stroke = vgSpecCompiled.marks[0].encode.update.stroke;
       }
+      // conditional encodes
+      ['opacity', 'color', 'strokeWidth'].forEach((channel) => {
+        if ((vlSpec.encoding as any)[channel] && 'condition' in (vlSpec.encoding as any)[channel] && 'param' in (vlSpec.encoding as any)[channel].condition) {
+          const { param, scale, empty, ...rest } = (vlSpec.encoding as any)[channel].condition;
+          const test = [
+            {
+              test: empty === false ? `length(data("${param}_store")) && vlSelectionTest("${param}_store", datum)` : `!length(data("${param}_store")) || vlSelectionTest("${param}_store", datum)`,
+              ...rest,
+              scale: scale ? 'color' : undefined,
+            },
+            Object.fromEntries(Object.entries((vlSpec.encoding as any)[channel]).filter(([key]) => ['field', 'value'].includes(key))),
+          ];
+
+          const vgChannel = channel === 'color' ? 'fill' : channel;
+
+          (vgSpec.marks[0].encode as any).update[vgChannel] = test;
+        }
+      });
     }
+    console.log('final', vgSpec);
     return vgSpec;
   }
 };
