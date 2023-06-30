@@ -61,6 +61,11 @@ const compileUnitVlContour = (vlSpec: VlContourUnitSpec): vega.Spec => {
               expr: 'datum.contour.value',
               as: 'contourValue',
             },
+            {
+              type: 'formula',
+              expr: 'datum.contour.coordinates.length',
+              as: 'numDisjointPolygons',
+            },
           ],
         },
         // {
@@ -149,20 +154,36 @@ const compileUnitVlContour = (vlSpec: VlContourUnitSpec): vega.Spec => {
       }
       // conditional encodes
       ['opacity', 'color', 'strokeWidth'].forEach((channel) => {
-        if ((vlSpec.encoding as any)[channel] && 'condition' in (vlSpec.encoding as any)[channel] && 'param' in (vlSpec.encoding as any)[channel].condition) {
-          const { param, scale, empty, ...rest } = (vlSpec.encoding as any)[channel].condition;
-          const test = [
-            {
-              test: empty === false ? `length(data("${param}_store")) && vlSelectionTest("${param}_store", datum)` : `!length(data("${param}_store")) || vlSelectionTest("${param}_store", datum)`,
-              ...rest,
-              scale: scale ? 'color' : undefined,
-            },
-            Object.fromEntries(Object.entries((vlSpec.encoding as any)[channel]).filter(([key]) => ['field', 'value'].includes(key))),
-          ];
+        if ((vlSpec.encoding as any)[channel] && 'condition' in (vlSpec.encoding as any)[channel]) {
+          if ('param' in (vlSpec.encoding as any)[channel].condition) {
+            const { param, scale, empty, ...rest } = (vlSpec.encoding as any)[channel].condition;
+            const test = [
+              {
+                test: empty === false ? `length(data("${param}_store")) && vlSelectionTest("${param}_store", datum)` : `!length(data("${param}_store")) || vlSelectionTest("${param}_store", datum)`,
+                ...rest,
+                scale: scale ? 'color' : undefined,
+              },
+              Object.fromEntries(Object.entries((vlSpec.encoding as any)[channel]).filter(([key]) => ['field', 'value'].includes(key))),
+            ];
 
-          const vgChannel = channel === 'color' ? 'fill' : channel;
+            const vgChannel = channel === 'color' ? 'fill' : channel;
 
-          (vgSpec.marks[0].encode as any).update[vgChannel] = test;
+            (vgSpec.marks[0].encode as any).update[vgChannel] = test;
+          } else if ('test' in (vlSpec.encoding as any)[channel].condition) {
+            const { test, scale, ...rest } = (vlSpec.encoding as any)[channel].condition;
+            const test2 = [
+              {
+                test,
+                ...rest,
+                scale: scale ? 'color' : undefined,
+              },
+              Object.fromEntries(Object.entries((vlSpec.encoding as any)[channel]).filter(([key]) => ['field', 'value'].includes(key))),
+            ];
+
+            const vgChannel = channel === 'color' ? 'fill' : channel;
+
+            (vgSpec.marks[0].encode as any).update[vgChannel] = test2;
+          }
         }
       });
     }
