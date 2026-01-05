@@ -22,12 +22,14 @@ replace `vegaLite.compile` with `compile` imported from `vl-contour`
 {
   "description": "A contour plot of the Maungawhau volcano in New Zealand.",
   "data": {"url": "data/volcano.json"},
-  "mark": "contour",
+  "mark": {
+    "type": "contour",
+    "smooth": true,
+    "thresholds": {"expr": "sequence(90, 195, 5)"}
+  },
   "encoding": {
     "stroke": {"value": "#ccc"},
-    "color": {"field": "value", "type": "quantitative", "scale": {"scheme": "blueorange"}},
-    "smooth": {"value": true},
-    "thresholds": {"value": {"expr": "sequence(90, 195, 5)"}}
+    "color": {"field": "value", "type": "quantitative", "scale": {"scheme": "blueorange"}}
   }
 }
 ```

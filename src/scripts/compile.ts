@@ -4,12 +4,19 @@ import { VlContourUnitSpec } from './types';
 import cloneDeep from 'lodash.clonedeep';
 
 const compileUnitVlContour = (vlSpec: VlContourUnitSpec): vega.Spec => {
-  if (vlSpec.mark !== 'contour') {
+  const markType = typeof vlSpec.mark === 'string' ? vlSpec.mark : vlSpec.mark.type;
+
+  if (markType !== 'contour') {
     return vl.compile(vlSpec as vl.TopLevelSpec).spec;
   } else {
     const vlSpecCopy = cloneDeep(vlSpec);
     vlSpecCopy.mark = 'point';
     const vgSpecCompiled = vl.compile(vlSpecCopy as vl.TopLevelSpec).spec;
+
+    // Extract contour mark properties
+    const contourMark = typeof vlSpec.mark === 'string' ? {} : vlSpec.mark;
+    const smooth = contourMark.smooth;
+    const thresholds = contourMark.thresholds;
 
     console.log(vgSpecCompiled);
 
@@ -129,19 +136,21 @@ const compileUnitVlContour = (vlSpec: VlContourUnitSpec): vega.Spec => {
     //   (vgSpec.marks[0].transform[0] as vega.GeoPathTransform).projection = 'projection';
     // }
 
+    // Apply contour mark properties
+    if (smooth !== undefined) {
+      (vgSpec.data.find((d) => d.name === 'contours').transform[0] as vega.IsocontourTransform).smooth = Boolean(smooth);
+    }
+    if (thresholds !== undefined) {
+      if (typeof thresholds === 'object' && 'expr' in thresholds) {
+        ((vgSpec.data.find((d) => d.name === 'contours').transform[0] as vega.IsocontourTransform).thresholds as vega.SignalRef) = {
+          signal: thresholds.expr,
+        };
+      } else {
+        (vgSpec.data.find((d) => d.name === 'contours').transform[0] as vega.IsocontourTransform).thresholds = thresholds;
+      }
+    }
+
     if (vlSpec.encoding) {
-      if ('smooth' in vlSpec.encoding) {
-        (vgSpec.data.find((d) => d.name === 'contours').transform[0] as vega.IsocontourTransform).smooth = Boolean(vlSpec.encoding.smooth.value);
-      }
-      if ('thresholds' in vlSpec.encoding && 'value' in vlSpec.encoding.thresholds) {
-        if ('expr' in vlSpec.encoding.thresholds.value) {
-          ((vgSpec.data.find((d) => d.name === 'contours').transform[0] as vega.IsocontourTransform).thresholds as vega.SignalRef) = {
-            signal: vlSpec.encoding.thresholds.value.expr,
-          };
-        } else {
-          (vgSpec.data.find((d) => d.name === 'contours').transform[0] as vega.IsocontourTransform).thresholds = vlSpec.encoding.thresholds.value;
-        }
-      }
       if ('color' in vlSpec.encoding) {
         if ('scale' in vlSpec.encoding.color && 'scheme' in vlSpec.encoding.color.scale) {
           ((vgSpec.scales[0] as vega.LinearScale).range as any) = {
